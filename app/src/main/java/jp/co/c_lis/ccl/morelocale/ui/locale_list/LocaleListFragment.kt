@@ -41,26 +41,57 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
 
     private val menuCallback = object : LocaleListAdapter.MenuCallback {
         override fun onEdit(localeItem: LocaleItem) {
-            parentFragmentManager.beginTransaction()
-                    .setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out, R.anim.fragment_in, R.anim.fragment_out)
-                    .add(R.id.fragment_container, EditLocaleFragment.getEditInstance(localeItem))
-                    .addToBackStack(null)
-                    .commit()
+            onEditLocale(localeItem)
         }
 
         override fun onDelete(localeItem: LocaleItem) {
             ConfirmDialog.show(
-                    targetFragment = this@LocaleListFragment,
-                    title = "",
-                    message = getString(R.string.confirm_delete),
-                    positiveButtonLabel = getString(R.string.delete),
-                    negativeButtonLabel = getString(android.R.string.cancel),
-                    onPositiveButtonClicked = { viewModel.deleteLocale(localeItem) },
+                targetFragment = this@LocaleListFragment,
+                title = "",
+                message = getString(R.string.confirm_delete),
+                positiveButtonLabel = getString(R.string.delete),
+                negativeButtonLabel = getString(android.R.string.cancel),
+                onPositiveButtonClicked = { viewModel.deleteLocale(localeItem) },
             )
         }
     }
 
+    private val currentListItemMenuCallback = object : CurrentLocaleListAdapter.MenuCallback {
+        override fun onMove(localeItem: LocaleItem, isUp: Boolean) {
+            viewModel.moveInCurrentLocales(localeItem, isUp)
+        }
+
+        override fun onEdit(localeItem: LocaleItem) {
+            onEditLocale(localeItem)
+        }
+
+        override fun onDelete(localeItem: LocaleItem) {
+            ConfirmDialog.show(
+                targetFragment = this@LocaleListFragment,
+                title = "",
+                message = getString(R.string.confirm_delete),
+                positiveButtonLabel = getString(R.string.delete),
+                negativeButtonLabel = getString(android.R.string.cancel),
+                onPositiveButtonClicked = { viewModel.delFromCurrentLocales(localeItem) },
+            )
+        }
+    }
+
+    private fun onEditLocale(localeItem: LocaleItem) {
+        parentFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fragment_in,
+                R.anim.fragment_out,
+                R.anim.fragment_in,
+                R.anim.fragment_out
+            )
+            .add(R.id.fragment_container, EditLocaleFragment.getEditInstance(localeItem))
+            .addToBackStack(null)
+            .commit()
+    }
+
     private var adapter: LocaleListAdapter? = null
+    private var currentListItemAdapter: CurrentLocaleListAdapter? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -74,37 +105,50 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
             Timber.d("Change locale ${localeItem.displayName}")
             setLocale(localeItem)
         }
+        currentListItemAdapter = CurrentLocaleListAdapter(
+            LayoutInflater.from(context),
+            currentListItemMenuCallback
+        )
     }
 
     private fun setLocale(localeItem: LocaleItem) {
-        viewModel.setLocale(localeItem)
+        viewModel.addToCurrentLocales(localeItem)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setFragmentResultListener(EditLocaleFragment.MODE.ADD.name) { requestKey, bundle ->
-            val localeItemAdded = bundle.getParcelable<LocaleItem>(EditLocaleFragment.RESULT_KEY_LOCALE_ITEM)
+            val localeItemAdded =
+                bundle.getParcelable<LocaleItem>(EditLocaleFragment.RESULT_KEY_LOCALE_ITEM)
                     ?: return@setFragmentResultListener
             Timber.d("Fragment Result $requestKey ${localeItemAdded.displayName}")
             viewModel.addLocale(localeItemAdded)
         }
         setFragmentResultListener(EditLocaleFragment.MODE.EDIT.name) { requestKey, bundle ->
             Timber.d("Fragment Result $requestKey")
-            val localeItemEdited = bundle.getParcelable<LocaleItem>(EditLocaleFragment.RESULT_KEY_LOCALE_ITEM)
+            val localeItemEdited =
+                bundle.getParcelable<LocaleItem>(EditLocaleFragment.RESULT_KEY_LOCALE_ITEM)
                     ?: return@setFragmentResultListener
             viewModel.editLocale(localeItemEdited)
         }
         setFragmentResultListener(EditLocaleFragment.MODE.SET.name) { requestKey, bundle ->
             Timber.d("Fragment Result $requestKey")
-            val localeItem = bundle.getParcelable<LocaleItem>(EditLocaleFragment.RESULT_KEY_LOCALE_ITEM)
+            val localeItem =
+                bundle.getParcelable<LocaleItem>(EditLocaleFragment.RESULT_KEY_LOCALE_ITEM)
                     ?: return@setFragmentResultListener
             setLocale(localeItem)
         }
 
-        viewModel.currentLocale.observe(viewLifecycleOwner) { currentLocale ->
+        viewModel.currentLocales.observe(viewLifecycleOwner) { currentLocale ->
+            currentListItemAdapter?.also {
+                it.submitList(currentLocale)
+            }
+        }
+
+        viewModel.canSave.observe(viewLifecycleOwner) { canSave ->
             binding?.also {
-                it.currentLocale = currentLocale
+                it.canSave = canSave
             }
         }
 
@@ -130,14 +174,16 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
         binding = FragmentLocaleListBinding.bind(view).also { binding ->
             binding.lifecycleOwner = viewLifecycleOwner
             binding.recyclerView.layoutManager = WrapContentLinearLayoutManager(
-                    requireContext(), LinearLayoutManager.VERTICAL, false)
+                requireContext(), LinearLayoutManager.VERTICAL, false
+            )
             binding.recyclerView.adapter = adapter
-            binding.customLocale.setOnClickListener {
-                parentFragmentManager.beginTransaction()
-                        .setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out, R.anim.fragment_in, R.anim.fragment_out)
-                        .add(R.id.fragment_container, EditLocaleFragment.getSetInstance(viewModel.currentLocale.value))
-                        .addToBackStack(null)
-                        .commit()
+            binding.recyclerViewCurrentLocales.layoutManager = WrapContentLinearLayoutManager(
+                requireContext(), LinearLayoutManager.VERTICAL, false
+            )
+            binding.recyclerViewCurrentLocales.adapter = currentListItemAdapter
+
+            binding.saveLocalesSettingButton.setOnClickListener {
+                viewModel.setLocales()
             }
 
             val activity = requireActivity()
@@ -146,8 +192,7 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
             }
         }
 
-        viewModel.loadCurrentLocale(requireContext())
-        viewModel.loadLocaleList(requireContext())
+        viewModel.loadLocaleListAndCurrentLocaleList(requireContext())
     }
 
     private fun setupActionBar(activity: AppCompatActivity, toolBar: Toolbar) {
@@ -164,20 +209,27 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
         when (item.itemId) {
             R.id.menu_add_locale -> {
                 parentFragmentManager.beginTransaction()
-                        .setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out, R.anim.fragment_in, R.anim.fragment_out)
-                        .add(R.id.fragment_container, EditLocaleFragment.getAddInstance())
-                        .addToBackStack(null)
-                        .commit()
+                    .setCustomAnimations(
+                        R.anim.fragment_in,
+                        R.anim.fragment_out,
+                        R.anim.fragment_in,
+                        R.anim.fragment_out
+                    )
+                    .add(R.id.fragment_container, EditLocaleFragment.getAddInstance())
+                    .addToBackStack(null)
+                    .commit()
             }
+
             R.id.menu_license -> {
                 parentFragmentManager.beginTransaction()
-                        .add(R.id.fragment_container, LicenseFragment.getInstance())
-                        .addToBackStack(null)
-                        .commit()
+                    .add(R.id.fragment_container, LicenseFragment.getInstance())
+                    .addToBackStack(null)
+                    .commit()
             }
+
             R.id.menu_about -> {
                 AboutDialog.getInstance()
-                        .show(parentFragmentManager, AboutDialog.TAG)
+                    .show(parentFragmentManager, AboutDialog.TAG)
             }
         }
         return super.onOptionsItemSelected(item)

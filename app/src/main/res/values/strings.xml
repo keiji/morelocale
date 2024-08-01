@@ -29,4 +29,8 @@
     <string name="about_url" translatable="false">https://github.com/c-lis/morelocale</string>
     <string name="copyright" translatable="false">Copyright C-LIS CO., LTD.</string>
     <string name="search">Search</string>
+    <string name="move_down">Move Down</string>
+    <string name="move_up">Move up</string>
+    <string name="current_locales_settings">Current locales settings</string>
+    <string name="all_locales">All locales</string>
 </resources>

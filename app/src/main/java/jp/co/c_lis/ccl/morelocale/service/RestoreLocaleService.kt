@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.LocaleList
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
@@ -120,7 +121,7 @@ class RestoreLocaleService : Service() {
         val currentLocale = MoreLocale.getLocale(resources.configuration)
 
         val locale = runBlocking {
-            preferenceRepository.loadLocale()?.locale
+            preferenceRepository.loadLocale()
         } ?: return START_STICKY_COMPATIBILITY
 
         if (equals(currentLocale, locale)) {
@@ -195,11 +196,11 @@ class RestoreLocaleService : Service() {
         coroutineScope.cancel()
     }
 
-    private fun restoreLocale(locale: Locale): Boolean {
+    private fun restoreLocale(locales: LocaleList): Boolean {
         Timber.d("Restore locale")
 
         try {
-            MoreLocale.setLocale(locale)
+            MoreLocale.setLocale(locales)
             return true
         } catch (e: InvocationTargetException) {
             Timber.e(e)

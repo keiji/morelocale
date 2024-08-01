@@ -34,14 +34,12 @@ package jp.co.c_lis.morelocale;
 
 import android.annotation.SuppressLint;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.LocaleList;
 import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Locale;
 
 public class MoreLocale {
     private static final String LOG_TAG = MoreLocale.class.getSimpleName();
@@ -68,26 +66,17 @@ public class MoreLocale {
      *
      * @return Locale
      */
-    @SuppressWarnings("deprecation")
-    public static Locale getLocale(Configuration configuration) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            return configuration.getLocales().get(0);
-        } else {
-            return configuration.locale;
-        }
+    public static LocaleList getLocale(Configuration configuration) {
+        return configuration.getLocales();
     }
 
     /**
      * 言語を設定.
      *
-     * @param locale
+     * @param locales
      */
-    public static boolean setLocale(Locale locale) throws InvocationTargetException {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            return setLocaleList(new LocaleList(locale));
-        } else {
-            return setSingleLocale(locale);
-        }
+    public static boolean setLocale(LocaleList locales) throws InvocationTargetException {
+        return setLocaleList(locales);
     }
 
     /**
@@ -114,7 +103,7 @@ public class MoreLocale {
             setUserSetLocale(config, true);
 
             // am.updateConfiguration(config);
-            Method updateConfiguration = am.getClass().getMethod("updateConfiguration", new Class[]{Configuration.class});
+            Method updateConfiguration = am.getClass().getMethod("updatePersistentConfiguration", new Class[]{Configuration.class});
             updateConfiguration.invoke(am, new Object[]{config});
 
             return true;
@@ -134,48 +123,4 @@ public class MoreLocale {
         }
         return false;
     }
-
-    /**
-     * 言語を設定
-     *
-     * @param locale
-     */
-    @SuppressWarnings({"RedundantArrayCreation", "ConfusingArgumentToVarargsMethod"})
-    private static boolean setSingleLocale(Locale locale) throws InvocationTargetException {
-        try {
-            @SuppressLint("PrivateApi") Class<?> activityManagerNative = Class.forName("android.app.ActivityManagerNative");
-
-            // ActivityManagerNative.getDefault();
-            Method getDefault = activityManagerNative.getMethod("getDefault", null);
-            Object am = getDefault.invoke(activityManagerNative, null);
-
-            // am.getConfiguration();
-            Method getConfiguration = am.getClass().getMethod("getConfiguration", null);
-            Configuration config = (Configuration) getConfiguration.invoke(am, null);
-
-            config.locale = locale;
-            setUserSetLocale(config, true);
-
-            // am.updateConfiguration(config);
-            Method updateConfiguration = am.getClass().getMethod("updateConfiguration", new Class[]{Configuration.class});
-            updateConfiguration.invoke(am, new Object[]{config});
-
-            return true;
-
-        } catch (ClassNotFoundException e) {
-            if (BuildConfig.DEBUG) {
-                Log.e(LOG_TAG, "ClassNotFoundException", e);
-            }
-        } catch (NoSuchMethodException e) {
-            if (BuildConfig.DEBUG) {
-                Log.e(LOG_TAG, "NoSuchMethodException", e);
-            }
-        } catch (IllegalAccessException e) {
-            if (BuildConfig.DEBUG) {
-                Log.e(LOG_TAG, "IllegalAccessException", e);
-            }
-        }
-        return false;
-    }
-
 }

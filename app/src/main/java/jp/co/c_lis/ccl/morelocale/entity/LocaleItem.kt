@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
+import kotlin.random.Random
 
 @Parcelize
 @Entity
@@ -30,6 +31,14 @@ data class LocaleItem(
                 return oldItem.isPreset == newItem.isPreset
             }
         }
+
+        fun from(locale: Locale) {
+            LocaleItem(
+                language = locale.language,
+                country = locale.country,
+                variant = locale.variant
+            )
+        }
     }
 
     @IgnoredOnParcel
@@ -49,9 +58,14 @@ data class LocaleItem(
 
     val displayFull: String
         get() {
-            val language = language ?: "N/A"
-            val variant = variant ?: "N/A"
-            return "$displayName $language $country $variant"
+            fun defaultValue(value: String?): String {
+                return if (value.isNullOrEmpty()) "_" else value
+            }
+
+            val language = defaultValue(language)
+            val country = defaultValue(country)
+            val variant = defaultValue(variant)
+            return "$displayName ($language-$country-$variant)"
         }
 }
 
@@ -61,15 +75,18 @@ fun createLocale(localeStr: String): LocaleItem {
         0 -> {
             LocaleItem(language = localeStr)
         }
+
         1 -> {
             LocaleItem(language = localeTokens[0])
         }
+
         2 -> {
             LocaleItem(
                 language = localeTokens[0],
                 country = localeTokens[1]
             )
         }
+
         else -> {
             LocaleItem(
                 language = localeTokens[0],
@@ -80,10 +97,25 @@ fun createLocale(localeStr: String): LocaleItem {
     }
 }
 
-fun createLocale(locale: Locale): LocaleItem {
-    return LocaleItem(
-        language = locale.language,
-        country = locale.country,
-        variant = locale.variant
-    )
+fun createLocale(locale: Locale, locales: List<LocaleItem>, ids: Set<Int>): LocaleItem {
+    val firstOrNull = locales.firstOrNull {
+        (it.language ?: "") == locale.language &&
+                (it.country ?: "") == locale.country &&
+                (it.variant ?: "") == locale.variant
+    }
+    return if (firstOrNull != null) {
+        firstOrNull
+    } else {
+        var id: Int
+        do {
+            id = Random.nextInt()
+        } while (ids.contains(id))
+        
+        LocaleItem(
+            id = id,
+            language = locale.language,
+            country = locale.country,
+            variant = locale.variant
+        )
+    }
 }

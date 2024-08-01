@@ -1,6 +1,7 @@
 package jp.co.c_lis.ccl.morelocale.repository
 
 import android.content.Context
+import android.os.LocaleList
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,39 +17,48 @@ class PreferenceRepository(applicationContext: Context) {
 
     companion object {
         private const val KEY_LANGUAGE = "key_language"
-        private const val KEY_COUNTRY = "key_country"
-        private const val KEY_VARIANT = "key_variant"
     }
 
     private val pref = applicationContext.getSharedPreferences(
-            BuildConfig.PREFERENCES_FILE_NAME, Context.MODE_PRIVATE)
+        BuildConfig.PREFERENCES_FILE_NAME, Context.MODE_PRIVATE
+    )
 
-    suspend fun saveLocale(localeItem: LocaleItem) = withContext(Dispatchers.IO) {
+    suspend fun saveLocale(locales: LocaleList) = withContext(Dispatchers.IO) {
+        val ls = mutableListOf<String>()
+        for (i in 0 until locales.size()) {
+            val e = locales[i]
+            ls.add("${e.language}-${e.country}-${e.variant}")
+        }
+
         pref.edit()
-                .putString(KEY_LANGUAGE, localeItem.locale.language)
-                .putString(KEY_COUNTRY, localeItem.locale.country)
-                .putString(KEY_VARIANT, localeItem.locale.variant)
-                .commit()
+            .putString(KEY_LANGUAGE, ls.joinToString(";"))
+            .commit()
     }
 
     suspend fun loadLocale() = withContext(Dispatchers.IO) {
-        val language = pref.getString(KEY_LANGUAGE, null) ?: return@withContext null
-        val country = pref.getString(KEY_COUNTRY, null)
-        val variant = pref.getString(KEY_VARIANT, null)
+        val store = pref.getString(KEY_LANGUAGE, null) ?: return@withContext null
+        val locals = store.split(';')
 
-        return@withContext LocaleItem(
+        return@withContext locals.map {
+            val locale = it.split('-')
+            val language = locale[0]
+            val country = locale[1]
+            val variant = locale[2]
+
+            LocaleItem(
                 language = language,
                 country = country,
                 variant = variant
-        )
+            ).locale
+        }.let {
+            LocaleList(*it.toTypedArray())
+        }
     }
 
     fun clearLocale() {
         pref.edit()
-                .putString(KEY_LANGUAGE, null)
-                .putString(KEY_COUNTRY, null)
-                .putString(KEY_VARIANT, null)
-                .apply()
+            .putString(KEY_LANGUAGE, null)
+            .apply()
     }
 }
 

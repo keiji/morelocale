@@ -1,9 +1,13 @@
 <resources>
     <string name="permission_required">Permission required</string>
     <string name="permission_required_message">MoreLocale is not granted a CHANGE_CONFIGURATION permission.\nIf you\'re able to use development tools, you can grant the permission manually by \'pm\' command.\n\nIf you have SuperUser privilege on your device.\nMoreLocale could get the permission automatically.</string>
+    <string name="permission_required_message_extra_permission">MoreLocale is not granted a CHANGE_CONFIGURATION and a WRITE_SETTINGS permission.\nIf you\'re able to use development tools, you can grant the permission manually by \'pm\' command.\n\nIf you have SuperUser privilege on your device.\nMoreLocale could get the permission automatically.</string>
     <string name="use_pm_command">Use \'pm\' command</string>
     <string name="execute_as_su">Execute as SuperUser</string>
     <string name="use_pm_command_message">1. On <b>Develop Options</b> enable <b>USB debugging mode</b> and <b>Disable Permission Monitoring</b> if available.\n2. Connect the device to your PC and type command below.\n<b>adb shell pm grant jp.co.c_lis.ccl.morelocale android.permission.CHANGE_CONFIGURATION</b></string>
     <string name="permission_granted">Permission is granted.</string>
     <string name="could_not_get_su_privilege">Couldn\'t get SuperUser privilege…</string>
+    <string name="click_to_copy_the_command">Click to copy the command</string>
+    <string name="already_copy_the_command">Already copy the command</string>
+    <string name="go_to_settings">Go to settings to grant WRITE_SETTINGS permission</string>
 </resources>
