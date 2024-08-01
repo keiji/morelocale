@@ -9,9 +9,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import jp.co.c_lis.ccl.morelocale.MainApplication
 import jp.co.c_lis.ccl.morelocale.entity.LocaleItem
-import jp.co.c_lis.ccl.morelocale.entity.createLocale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Singleton
 
 class LocaleRepository(applicationContext: Context) {
@@ -24,12 +24,13 @@ class LocaleRepository(applicationContext: Context) {
             return@withContext localeList
         }
 
-        val localeItems = assetManager.locales
-                .filterNotNull()
-                .reversed()
-                .map { localeStr -> createLocale(localeStr).also { it.isPreset = true } }
+        val localeItems = Locale.getAvailableLocales()
+//assetManager.locales
+            .filterNotNull()
+            .reversed()
+            .map { LocaleItem.from(it).also { it.isPreset = true } }
         db.localeItemDao()
-                .insertAll(localeItems)
+            .insertAll(localeItems)
 
         return@withContext findAll()
     }
@@ -40,17 +41,17 @@ class LocaleRepository(applicationContext: Context) {
 
     suspend fun create(locale: LocaleItem) = withContext(Dispatchers.IO) {
         db.localeItemDao()
-                .insert(locale)
+            .insert(locale)
     }
 
     suspend fun update(locale: LocaleItem) = withContext(Dispatchers.IO) {
         db.localeItemDao()
-                .update(locale)
+            .update(locale)
     }
 
     suspend fun delete(locale: LocaleItem) = withContext(Dispatchers.IO) {
         db.localeItemDao()
-                .delete(locale)
+            .delete(locale)
     }
 }
 

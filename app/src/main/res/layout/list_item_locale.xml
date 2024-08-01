@@ -28,29 +28,57 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/label_langCode"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@{locale.langCode}"
+            android:textStyle="normal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/label"
+            app:layout_constraintStart_toEndOf="@+id/color_bar"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="zh-cn-Hans" />
+
+        <LinearLayout
+            android:orientation="vertical"
             android:id="@+id/label"
-            style="@style/TextAppearance.MaterialComponents.Body1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
-            android:gravity="center_vertical"
-            android:text="@{locale.displayFull}"
-            android:textStyle="normal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/more"
-            app:layout_constraintStart_toEndOf="@+id/color_bar"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/label_langCode"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                style="@style/TextAppearance.MaterialComponents.Body1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{locale.displayName}"
+                android:textStyle="normal"
+                tools:text="Japanese（日本）" />
+
+        <TextView
+            android:id="@+id/labelLocalName"
+            style="@style/TextAppearance.MaterialComponents.Body1"
+            android:layout_width="wrap_content"
+            android:gravity="start"
+            android:layout_height="wrap_content"
+            android:text="@{locale.displayNameInLocal}"
+            android:textStyle="normal"
             tools:text="日本語（日本）" />
+        </LinearLayout>
+
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/more"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
             android:background="?android:attr/selectableItemBackground"
             android:src="@drawable/more_vert"
             app:layout_constraintBottom_toBottomOf="@+id/label"

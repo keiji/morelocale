@@ -26,8 +26,7 @@ class PreferenceRepository(applicationContext: Context) {
     suspend fun saveLocale(locales: LocaleList) = withContext(Dispatchers.IO) {
         val ls = mutableListOf<String>()
         for (i in 0 until locales.size()) {
-            val e = locales[i]
-            ls.add("${e.language}-${e.country}-${e.variant}")
+            ls.add(locales[i].toString())
         }
 
         pref.edit()
@@ -40,15 +39,18 @@ class PreferenceRepository(applicationContext: Context) {
         val locals = store.split(';')
 
         return@withContext locals.map {
-            val locale = it.split('-')
-            val language = locale[0]
-            val country = locale[1]
-            val variant = locale[2]
+            val locale = it.split('_')
+            val language = if (locale.isNotEmpty()) locale[0] else null
+            val country = if (locale.size > 1) locale[1] else null
+            val variantAndScript = if (locale.size > 2) locale[2].split('#') else listOf()
+            val variant = if (variantAndScript.isNotEmpty()) variantAndScript[0] else null
+            val script = if (variantAndScript.size > 1) variantAndScript[1] else null
 
             LocaleItem(
                 language = language,
                 country = country,
-                variant = variant
+                variant = variant,
+                script = script
             ).locale
         }.let {
             LocaleList(*it.toTypedArray())

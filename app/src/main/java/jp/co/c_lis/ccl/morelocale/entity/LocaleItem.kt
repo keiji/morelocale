@@ -19,6 +19,7 @@ data class LocaleItem(
     val language: String? = null,
     val country: String? = null,
     val variant: String? = null,
+    val script: String? = null,
     var isPreset: Boolean = false,
 ) : Parcelable {
     companion object {
@@ -32,76 +33,44 @@ data class LocaleItem(
             }
         }
 
-        fun from(locale: Locale) {
-            LocaleItem(
+        fun from(locale: Locale): LocaleItem {
+            return LocaleItem(
                 language = locale.language,
                 country = locale.country,
-                variant = locale.variant
+                variant = locale.variant,
+                script = locale.script,
             )
         }
     }
 
     @IgnoredOnParcel
     @Ignore
-    val locale: Locale = if (language != null && country != null && variant != null) {
-        Locale(language, country, variant)
-    } else if (language != null && country != null && variant == null) {
-        Locale(language, country)
-    } else if (language != null && country == null && variant == null) {
-        Locale(language)
-    } else {
-        Locale("")
-    }
+    val locale: Locale =
+        Locale.Builder().setLanguage(language).setRegion(country).setVariant(variant)
+            .setScript(script).build()
 
     val displayName: String
         get() = label ?: locale.displayName
 
+    val displayNameInLocal: String
+        get() = locale.getDisplayName(locale)
+
+    @IgnoredOnParcel
+    @Ignore
+    val langCode = locale.toString()
+
     val displayFull: String
         get() {
-            fun defaultValue(value: String?): String {
-                return if (value.isNullOrEmpty()) "_" else value
-            }
-
-            val language = defaultValue(language)
-            val country = defaultValue(country)
-            val variant = defaultValue(variant)
-            return "$displayName ($language-$country-$variant)"
+            return "$displayName ($langCode)\n$displayNameInLocal"
         }
-}
-
-fun createLocale(localeStr: String): LocaleItem {
-    val localeTokens = localeStr.split("-")
-    return when (localeTokens.size) {
-        0 -> {
-            LocaleItem(language = localeStr)
-        }
-
-        1 -> {
-            LocaleItem(language = localeTokens[0])
-        }
-
-        2 -> {
-            LocaleItem(
-                language = localeTokens[0],
-                country = localeTokens[1]
-            )
-        }
-
-        else -> {
-            LocaleItem(
-                language = localeTokens[0],
-                country = localeTokens[1],
-                variant = localeTokens[2]
-            )
-        }
-    }
 }
 
 fun createLocale(locale: Locale, locales: List<LocaleItem>, ids: Set<Int>): LocaleItem {
     val firstOrNull = locales.firstOrNull {
         (it.language ?: "") == locale.language &&
-                (it.country ?: "") == locale.country &&
-                (it.variant ?: "") == locale.variant
+        (it.country ?: "") == locale.country &&
+        (it.variant ?: "") == locale.variant &&
+        (it.script ?: "") == locale.script
     }
     return if (firstOrNull != null) {
         firstOrNull

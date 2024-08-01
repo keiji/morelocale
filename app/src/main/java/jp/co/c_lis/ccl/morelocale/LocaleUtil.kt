@@ -21,6 +21,10 @@ private fun equals(obj1: Locale, obj2: Locale): Boolean {
         return false
     }
 
+    if (obj1.script != obj2.script) {
+        return false
+    }
+
     return true
 }
 
