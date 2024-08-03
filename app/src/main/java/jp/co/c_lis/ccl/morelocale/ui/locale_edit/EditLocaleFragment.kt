@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.os.bundleOf
@@ -18,14 +19,15 @@ import jp.co.c_lis.ccl.morelocale.databinding.FragmentEditLocaleBinding
 import jp.co.c_lis.ccl.morelocale.entity.LocaleItem
 import jp.co.c_lis.ccl.morelocale.entity.Type
 import jp.co.c_lis.ccl.morelocale.ui.locale_iso_list.LocaleIsoListFragment
+import java.util.IllformedLocaleException
 
 @AndroidEntryPoint
 class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
 
     enum class MODE(
-            val titleRes: Int,
-            val positiveButtonLabelRes: Int,
-            val showLabelInput: Boolean,
+        val titleRes: Int,
+        val positiveButtonLabelRes: Int,
+        val showLabelInput: Boolean,
     ) {
         ADD(R.string.add_locale, R.string.add, true),
         EDIT(R.string.edit_locale, R.string.save, true),
@@ -128,14 +130,31 @@ class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
                 it.toString()
             }
         }
+        val script = binding.inputScript.text.let {
+            if (it.isNullOrBlank()) {
+                null
+            } else {
+                it.toString()
+            }
+        }
 
-        return LocaleItem(
+        try {
+            return LocaleItem(
                 id = editItem?.id ?: 0,
                 label = label,
                 language = language,
                 country = country,
-                variant = variant
-        )
+                variant = variant,
+                script = script,
+            )
+        } catch (ex: IllformedLocaleException) {
+            Toast.makeText(
+                context,
+                ex.message,
+                Toast.LENGTH_LONG
+            ).show()
+            return null
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -143,12 +162,12 @@ class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
 
         setFragmentResultListener(Type.Iso639.name) { _, bundle ->
             val iso639Str = bundle.getString(LocaleIsoListFragment.RESULT_KEY_LOCALE)
-                    ?: return@setFragmentResultListener
+                ?: return@setFragmentResultListener
             binding?.inputLanguage?.setText(iso639Str)
         }
         setFragmentResultListener(Type.Iso3166.name) { _, bundle ->
             val iso3166Str = bundle.getString(LocaleIsoListFragment.RESULT_KEY_LOCALE)
-                    ?: return@setFragmentResultListener
+                ?: return@setFragmentResultListener
             binding?.inputCountry?.setText(iso3166Str)
         }
 
@@ -165,17 +184,17 @@ class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
 
             binding.buttonIso639.setOnClickListener {
                 parentFragmentManager.beginTransaction()
-                        .setCustomAnimations(R.anim.fragment_in, 0, 0, R.anim.fragment_out)
-                        .add(R.id.fragment_container, LocaleIsoListFragment.getIso639Instance())
-                        .addToBackStack(null)
-                        .commit()
+                    .setCustomAnimations(R.anim.fragment_in, 0, 0, R.anim.fragment_out)
+                    .add(R.id.fragment_container, LocaleIsoListFragment.getIso639Instance())
+                    .addToBackStack(null)
+                    .commit()
             }
             binding.buttonIso3166.setOnClickListener {
                 parentFragmentManager.beginTransaction()
-                        .setCustomAnimations(R.anim.fragment_in, 0, 0, R.anim.fragment_out)
-                        .add(R.id.fragment_container, LocaleIsoListFragment.getIso3166Instance())
-                        .addToBackStack(null)
-                        .commit()
+                    .setCustomAnimations(R.anim.fragment_in, 0, 0, R.anim.fragment_out)
+                    .add(R.id.fragment_container, LocaleIsoListFragment.getIso3166Instance())
+                    .addToBackStack(null)
+                    .commit()
             }
 
             editItem?.also { localeItem ->
@@ -183,6 +202,7 @@ class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
                 binding.inputLanguage.setText(localeItem.language)
                 binding.inputCountry.setText(localeItem.country)
                 binding.inputVariant.setText(localeItem.variant)
+                binding.inputScript.setText(localeItem.script)
                 localeItem.id
             }
 
@@ -221,6 +241,7 @@ class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
                 parentFragmentManager.popBackStack()
                 true
             }
+
             R.id.menu_set -> {
                 if (!validation()) {
                     return true
@@ -232,6 +253,7 @@ class EditLocaleFragment : Fragment(R.layout.fragment_edit_locale) {
                 }
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }

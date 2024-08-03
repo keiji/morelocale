@@ -1,6 +1,7 @@
 package jp.co.c_lis.ccl.morelocale.ui.locale_list
 
 import android.content.Context
+import android.os.LocaleList
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
 import javax.inject.Inject
+import jp.co.c_lis.ccl.morelocale.equals
 
 @HiltViewModel
 class LocaleListViewModel @Inject constructor(
@@ -23,26 +25,88 @@ class LocaleListViewModel @Inject constructor(
     private val preferenceRepository: PreferenceRepository,
 ) : ViewModel() {
 
-    val currentLocale = MutableLiveData<LocaleItem>()
+    private var lastCurrentLocales = listOf<LocaleItem>()
+    val currentLocales = MutableLiveData<MutableList<LocaleItem>>()
     val localeList = MutableLiveData<List<LocaleItem>>()
+    val canSave = MutableLiveData(false)
 
     private val _alertsEvents = MutableSharedFlow<AlertsMoreLocale>()
     val alertsEvents = _alertsEvents.asLiveData()
 
-    fun loadCurrentLocale(context: Context) = viewModelScope.launch {
-        val localeConfigs = createLocale(MoreLocale.getLocale(context.resources.configuration))
-        val localePreferences = preferenceRepository.loadLocale()
+    private fun loadCurrentLocales(context: Context, localeList: List<LocaleItem>) =
+        viewModelScope.launch {
+            val localeConfigs = MoreLocale.getLocale(context.resources.configuration)
+            val localePreferences = preferenceRepository.loadLocale()
 
-        if (localePreferences != null && localeConfigs.id != localePreferences.id) {
-            setLocale(localePreferences)
+            if (localePreferences != null && !equals(
+                    localeConfigs,
+                    localePreferences
+                )
+            ) {
+                setLocales(localePreferences) {}
+            }
+            val locales = localePreferences ?: localeConfigs
+            val ls = mutableListOf<LocaleItem>()
+            val ids = localeList.map { it.id }.toMutableSet()
+            for (i in 0 until locales.size()) {
+                val element = createLocale(locales[i], localeList, ids)
+                ls.add(element)
+                ids.add(element.id)
+            }
+
+            currentLocales.postValue(ls)
+            lastCurrentLocales = ls.toList()
         }
 
-        currentLocale.postValue(localePreferences ?: localeConfigs)
+    private fun checkIfCanSave(ls: MutableList<LocaleItem>) {
+        canSave.postValue(ls != lastCurrentLocales)
     }
 
-    fun loadLocaleList(context: Context) {
+    fun addToCurrentLocales(localeItem: LocaleItem) {
         viewModelScope.launch {
-            localeList.postValue(localeListRepository.getAll(context.assets))
+            val ls = currentLocales.value?.toMutableList() ?: mutableListOf()
+            if (ls.contains(localeItem)) {
+                return@launch
+            }
+
+            ls.add(0, localeItem)
+            currentLocales.postValue(ls)
+            checkIfCanSave(ls)
+        }
+    }
+
+    fun delFromCurrentLocales(localeItem: LocaleItem) {
+        viewModelScope.launch {
+            val ls = currentLocales.value?.toMutableList() ?: mutableListOf()
+            if (!ls.contains(localeItem) || ls.size < 2) {
+                return@launch
+            }
+
+            ls.remove(localeItem)
+            currentLocales.postValue(ls)
+            checkIfCanSave(ls)
+        }
+    }
+
+    fun moveInCurrentLocales(fromPosition: Int, toPosition: Int) {
+        viewModelScope.launch {
+            val ls = currentLocales.value?.toMutableList() ?: mutableListOf()
+            if (fromPosition < 0 || toPosition < 0 || ls.size <= fromPosition || ls.size <= toPosition) {
+                return@launch
+            }
+            val it = ls[fromPosition]
+            ls.remove(it)
+            ls.add(toPosition, it)
+            currentLocales.postValue(ls)
+            checkIfCanSave(ls)
+        }
+    }
+
+    fun loadLocaleListAndCurrentLocaleList(context: Context) {
+        viewModelScope.launch {
+            val all = localeListRepository.getAll()
+            localeList.postValue(all)
+            loadCurrentLocales(context, all)
         }
     }
 
@@ -69,15 +133,27 @@ class LocaleListViewModel @Inject constructor(
         }
     }
 
-    fun setLocale(localeItem: LocaleItem) = viewModelScope.launch {
+    private fun setLocales(locales: LocaleList, whenSucceed: () -> Unit) = viewModelScope.launch {
         try {
-            MoreLocale.setLocale(localeItem.locale)
+            MoreLocale.setLocale(locales)
 
-            preferenceRepository.saveLocale(localeItem)
+            if (preferenceRepository.saveLocale(locales)) {
+                whenSucceed()
+            }
         } catch (e: InvocationTargetException) {
             Timber.e(e, "InvocationTargetException")
 
             _alertsEvents.emit(AlertsMoreLocale.NEED_PERMISSION)
+        }
+    }
+
+    fun setLocales() = viewModelScope.launch {
+        val ls: List<LocaleItem>? = currentLocales.value
+        if (!ls.isNullOrEmpty()) {
+            setLocales(LocaleList(*ls.map { it.locale }.toTypedArray())) {
+                lastCurrentLocales = ls.toList()
+                canSave.postValue(false)
+            }
         }
     }
 }

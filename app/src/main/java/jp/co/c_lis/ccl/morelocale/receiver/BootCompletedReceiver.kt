@@ -24,7 +24,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
         runBlocking {
             val currentLocale = MoreLocale.getLocale(context.resources.configuration)
-            val savedLocale = PreferenceRepository(context).loadLocale()?.locale
+            val savedLocale = PreferenceRepository(context).loadLocale()
                     ?: return@runBlocking
 
             if (equals(currentLocale, savedLocale)) {

@@ -26,6 +26,7 @@ class MainApplication : MultiDexApplication() {
                     BuildConfig.DATABASE_FILE_NAME
             )
                     .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_3)
                     .build().also {
                         db = it
                     }

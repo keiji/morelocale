@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "760f2e4c0ae13c24aa786d9aec9ec9bf",
+    "identityHash": "7beb2ca6fc275344ad3eee1b08fdaadc",
     "entities": [
       {
         "tableName": "LocaleItem",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `label` TEXT, `language` TEXT, `country` TEXT, `variant` TEXT, `isPreset` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `label` TEXT, `language` TEXT, `country` TEXT, `variant` TEXT, `script` TEXT, `isPreset` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -39,6 +39,12 @@
             "notNull": false
           },
           {
+            "fieldPath": "script",
+            "columnName": "script",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "isPreset",
             "columnName": "isPreset",
             "affinity": "INTEGER",
@@ -46,10 +52,10 @@
           }
         ],
         "primaryKey": {
+          "autoGenerate": true,
           "columnNames": [
             "id"
-          ],
-          "autoGenerate": true
+          ]
         },
         "indices": [],
         "foreignKeys": []
@@ -84,10 +90,10 @@
           }
         ],
         "primaryKey": {
+          "autoGenerate": true,
           "columnNames": [
             "id"
-          ],
-          "autoGenerate": true
+          ]
         },
         "indices": [],
         "foreignKeys": []
@@ -96,7 +102,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '760f2e4c0ae13c24aa786d9aec9ec9bf')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7beb2ca6fc275344ad3eee1b08fdaadc')"
     ]
   }
 }

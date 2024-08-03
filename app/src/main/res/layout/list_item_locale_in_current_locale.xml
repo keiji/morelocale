@@ -27,6 +27,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/drag_handler"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@drawable/move_handler"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/color_bar"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
             android:id="@+id/label_langCode"
             android:layout_width="50dp"
@@ -36,7 +47,7 @@
             android:textStyle="normal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/label"
-            app:layout_constraintStart_toEndOf="@+id/color_bar"
+            app:layout_constraintStart_toEndOf="@+id/drag_handler"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="zh-cn-Hans" />
 

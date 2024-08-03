@@ -6,8 +6,8 @@
     <data>
 
         <variable
-            name="currentLocale"
-            type="jp.co.c_lis.ccl.morelocale.entity.LocaleItem" />
+            name="canSave"
+            type="Boolean" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -35,33 +35,55 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:minHeight="?android:listPreferredItemHeight"
-            android:paddingStart="16dp"
-            android:paddingLeft="16dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="8dp"
-            android:paddingRight="8dp"
+
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
 
-            <TextView
-                android:id="@+id/current_locale_display"
-                style="@style/TextAppearance.MaterialComponents.Body1"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:id="@+id/currentLocalesHeader"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="@{currentLocale.displayFull}"
-                tools:text="日本語（日本） ja JP N/A" />
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
-            <Button
-                android:id="@+id/custom_locale"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                <TextView
+                    android:id="@+id/currentLocalesTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBaseline="@id/saveLocalesSettingButton"
+                    android:paddingBottom="16dp"
+                    android:text="@string/current_locales_settings" />
+
+                <Button
+                    android:id="@+id/saveLocalesSettingButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_toEndOf="@+id/currentLocalesTitle"
+                    android:enabled="@{canSave}"
+                    android:text="@string/save" />
+            </RelativeLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewCurrentLocales"
+                android:layout_width="fill_parent"
+                android:layout_height="280dp"
+                android:layout_below="@id/currentLocalesHeader"
+                android:scrollbars="vertical"
+                tools:listitem="@layout/list_item_locale_in_current_locale" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/current_locale_display"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
-                android:layout_marginTop="8dp"
-                android:text="@string/set_custom_locale" />
+                android:layout_below="@id/recyclerViewCurrentLocales"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:text="@string/all_locales" />
+
         </RelativeLayout>
 
         <androidx.recyclerview.widget.RecyclerView

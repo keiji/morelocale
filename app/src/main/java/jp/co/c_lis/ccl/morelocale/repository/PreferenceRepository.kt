@@ -1,54 +1,50 @@
 package jp.co.c_lis.ccl.morelocale.repository
 
 import android.content.Context
+import android.os.LocaleList
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import jp.co.c_lis.ccl.morelocale.BuildConfig
-import jp.co.c_lis.ccl.morelocale.entity.LocaleItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Singleton
 
 class PreferenceRepository(applicationContext: Context) {
 
     companion object {
-        private const val KEY_LANGUAGE = "key_language"
-        private const val KEY_COUNTRY = "key_country"
-        private const val KEY_VARIANT = "key_variant"
+        @Deprecated("don't use anymore") private const val KEY_LANGUAGE = "key_language"
+        @Deprecated("don't use anymore") private const val KEY_COUNTRY = "key_country"
+        @Deprecated("don't use anymore") private const val KEY_VARIANT = "key_variant"
+        private const val KEY_LANGUAGES = "key_languages"
     }
 
     private val pref = applicationContext.getSharedPreferences(
-            BuildConfig.PREFERENCES_FILE_NAME, Context.MODE_PRIVATE)
+        BuildConfig.PREFERENCES_FILE_NAME, Context.MODE_PRIVATE
+    )
 
-    suspend fun saveLocale(localeItem: LocaleItem) = withContext(Dispatchers.IO) {
+    suspend fun saveLocale(locales: LocaleList) = withContext(Dispatchers.IO) {
         pref.edit()
-                .putString(KEY_LANGUAGE, localeItem.locale.language)
-                .putString(KEY_COUNTRY, localeItem.locale.country)
-                .putString(KEY_VARIANT, localeItem.locale.variant)
-                .commit()
+            .putString(KEY_LANGUAGES, locales.toLanguageTags())
+            .commit()
     }
 
     suspend fun loadLocale() = withContext(Dispatchers.IO) {
-        val language = pref.getString(KEY_LANGUAGE, null) ?: return@withContext null
-        val country = pref.getString(KEY_COUNTRY, null)
-        val variant = pref.getString(KEY_VARIANT, null)
-
-        return@withContext LocaleItem(
-                language = language,
-                country = country,
-                variant = variant
-        )
+        val store = pref.getString(KEY_LANGUAGES, null) ?: return@withContext null
+        return@withContext LocaleList.forLanguageTags(store)
     }
 
+    @Suppress("DEPRECATION")
     fun clearLocale() {
         pref.edit()
-                .putString(KEY_LANGUAGE, null)
-                .putString(KEY_COUNTRY, null)
-                .putString(KEY_VARIANT, null)
-                .apply()
+            .putString(KEY_LANGUAGE, null)
+            .putString(KEY_COUNTRY, null)
+            .putString(KEY_VARIANT, null)
+            .putString(KEY_LANGUAGES, null)
+            .apply()
     }
 }
 
