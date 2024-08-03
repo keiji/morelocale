@@ -88,21 +88,15 @@ class LocaleListViewModel @Inject constructor(
         }
     }
 
-    fun moveInCurrentLocales(localeItem: LocaleItem, isUp: Boolean) {
+    fun moveInCurrentLocales(fromPosition: Int, toPosition: Int) {
         viewModelScope.launch {
             val ls = currentLocales.value?.toMutableList() ?: mutableListOf()
-            if (!ls.contains(localeItem)) {
+            if (fromPosition < 0 || toPosition < 0 || ls.size <= fromPosition || ls.size <= toPosition) {
                 return@launch
             }
-            val idx = ls.indexOf(localeItem)
-            if (isUp && idx == 0 || (!isUp && idx >= ls.size - 1)) {
-                return@launch
-            }
-
-            val x = if (isUp) -1 else 1
-            val t = ls[idx + x]
-            ls[idx + x] = ls[idx]
-            ls[idx] = t
+            val it = ls[fromPosition]
+            ls.remove(it)
+            ls.add(toPosition, it)
             currentLocales.postValue(ls)
             checkIfCanSave(ls)
         }
@@ -110,7 +104,7 @@ class LocaleListViewModel @Inject constructor(
 
     fun loadLocaleListAndCurrentLocaleList(context: Context) {
         viewModelScope.launch {
-            val all = localeListRepository.getAll(context.assets)
+            val all = localeListRepository.getAll()
             localeList.postValue(all)
             loadCurrentLocales(context, all)
         }

@@ -1,7 +1,6 @@
 package jp.co.c_lis.ccl.morelocale.repository
 
 import android.content.Context
-import android.content.res.AssetManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,14 +17,13 @@ class LocaleRepository(applicationContext: Context) {
 
     private val db = MainApplication.getDbInstance(applicationContext)
 
-    suspend fun getAll(assetManager: AssetManager) = withContext(Dispatchers.IO) {
+    suspend fun getAll() = withContext(Dispatchers.IO) {
         val localeList = findAll()
         if (localeList.isNotEmpty()) {
             return@withContext localeList
         }
 
         val localeItems = Locale.getAvailableLocales()
-//assetManager.locales
             .filterNotNull()
             .reversed()
             .map { LocaleItem.from(it).also { it.isPreset = true } }

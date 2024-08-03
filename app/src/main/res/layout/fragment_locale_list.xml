@@ -72,7 +72,7 @@
                 android:layout_height="280dp"
                 android:layout_below="@id/currentLocalesHeader"
                 android:scrollbars="vertical"
-                tools:listitem="@layout/list_item_locale" />
+                tools:listitem="@layout/list_item_locale_in_current_locale" />
 
             <TextView
                 android:layout_width="wrap_content"

@@ -57,7 +57,7 @@ data class LocaleItem(
 
     @IgnoredOnParcel
     @Ignore
-    val langCode = locale.toString()
+    val langCode: String = locale.toLanguageTag()
 
     val displayFull: String
         get() {
@@ -84,7 +84,8 @@ fun createLocale(locale: Locale, locales: List<LocaleItem>, ids: Set<Int>): Loca
             id = id,
             language = locale.language,
             country = locale.country,
-            variant = locale.variant
+            variant = locale.variant,
+            script = locale.script
         )
     }
 }

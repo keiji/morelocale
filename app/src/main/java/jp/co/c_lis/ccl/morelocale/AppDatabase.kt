@@ -13,7 +13,7 @@ import jp.co.c_lis.ccl.morelocale.entity.LocaleItem
 
 @Database(
         entities = [LocaleItem::class, LocaleIsoItem::class],
-        version = 2
+        version = 3
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -27,5 +27,12 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("CREATE TABLE IF NOT EXISTS `LocaleIsoItem`" +
                 " (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT, `label` TEXT NOT NULL, `value` TEXT NOT NULL)")
+    }
+}
+
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("DELETE FROM `LocaleItem`")
+        database.execSQL("ALTER TABLE `LocaleItem` ADD COLUMN `script` TEXT")
     }
 }

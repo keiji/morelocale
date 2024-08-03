@@ -1,24 +1,28 @@
 package jp.co.c_lis.ccl.morelocale.ui.locale_list
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import jp.co.c_lis.ccl.morelocale.R
-import jp.co.c_lis.ccl.morelocale.databinding.ListItemLocaleBinding
+import jp.co.c_lis.ccl.morelocale.databinding.ListItemLocaleInCurrentLocaleBinding
 import jp.co.c_lis.ccl.morelocale.entity.LocaleItem
 
 class CurrentLocaleListAdapter(
     private val inflater: LayoutInflater,
     private val menuCallback: MenuCallback? = null,
+    private val startDragCallback: (RecyclerView.ViewHolder) -> Unit,
 ) : ListAdapter<LocaleItem, RecyclerView.ViewHolder>(LocaleItem.itemDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return LocaleItemViewHolder(
-            inflater.inflate(R.layout.list_item_locale, parent, false),
-            menuCallback
+            inflater.inflate(R.layout.list_item_locale_in_current_locale, parent, false),
+            menuCallback, startDragCallback
         )
     }
 
@@ -38,19 +42,24 @@ class CurrentLocaleListAdapter(
     class LocaleItemViewHolder(
         itemView: View,
         private val menuCallback: MenuCallback?,
+        private val startDragCallback: (RecyclerView.ViewHolder) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
-        private val binding = ListItemLocaleBinding.bind(itemView)
+        private val binding = ListItemLocaleInCurrentLocaleBinding.bind(itemView)
 
+        @SuppressLint("ClickableViewAccessibility")
         fun bind(localeItem: LocaleItem) {
             binding.locale = localeItem
 
             binding.more.visibility = View.VISIBLE
-            binding.root.setOnLongClickListener {
-                showPopupMenu(binding.more, localeItem)
-                return@setOnLongClickListener true
-            }
             binding.more.setOnClickListener {
                 showPopupMenu(it, localeItem)
+            }
+            binding.dragHandler.performClick()
+            binding.dragHandler.setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_DOWN) {
+                    startDragCallback(this)
+                }
+                return@setOnTouchListener false
             }
         }
 
@@ -62,8 +71,6 @@ class CurrentLocaleListAdapter(
                 )
                 popupMenu.setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {
-                        R.id.menu_up -> menuCallback?.onMove(localeItem, true)
-                        R.id.menu_down -> menuCallback?.onMove(localeItem, false)
                         R.id.menu_delete -> menuCallback?.onDelete(localeItem)
                         R.id.menu_edit -> menuCallback?.onEdit(localeItem)
                     }
@@ -78,7 +85,6 @@ class CurrentLocaleListAdapter(
     }
 
     interface MenuCallback {
-        fun onMove(localeItem: LocaleItem, isUp: Boolean)
         fun onEdit(localeItem: LocaleItem)
         fun onDelete(localeItem: LocaleItem)
     }

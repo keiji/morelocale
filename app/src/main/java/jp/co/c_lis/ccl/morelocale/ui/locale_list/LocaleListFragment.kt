@@ -12,7 +12,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import jp.co.c_lis.ccl.morelocale.R
 import jp.co.c_lis.ccl.morelocale.databinding.FragmentLocaleListBinding
@@ -24,6 +26,7 @@ import jp.co.c_lis.ccl.morelocale.ui.license.LicenseFragment
 import jp.co.c_lis.ccl.morelocale.ui.locale_edit.EditLocaleFragment
 import jp.co.c_lis.ccl.morelocale.widget.WrapContentLinearLayoutManager
 import timber.log.Timber
+
 
 @AndroidEntryPoint
 class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
@@ -57,10 +60,6 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
     }
 
     private val currentListItemMenuCallback = object : CurrentLocaleListAdapter.MenuCallback {
-        override fun onMove(localeItem: LocaleItem, isUp: Boolean) {
-            viewModel.moveInCurrentLocales(localeItem, isUp)
-        }
-
         override fun onEdit(localeItem: LocaleItem) {
             onEditLocale(localeItem)
         }
@@ -92,6 +91,40 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
 
     private var adapter: LocaleListAdapter? = null
     private var currentListItemAdapter: CurrentLocaleListAdapter? = null
+    private val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
+
+        private var startPosition: Int = 0
+        private var endPosition: Int = 0
+
+        override fun isLongPressDragEnabled() = false
+
+        override fun getMovementFlags(
+            recyclerView: RecyclerView,
+            viewHolder: RecyclerView.ViewHolder,
+        ) = makeMovementFlags(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
+        )
+
+        override fun onMove(
+            recyclerView: RecyclerView,
+            viewHolder: RecyclerView.ViewHolder,
+            target: RecyclerView.ViewHolder,
+        ): Boolean {
+            endPosition = target.absoluteAdapterPosition
+            return true
+        }
+
+        override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+        }
+
+        override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+            if (viewHolder != null && actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                startPosition = viewHolder.absoluteAdapterPosition
+            } else if (actionState == ItemTouchHelper.ACTION_STATE_IDLE) {
+                viewModel.moveInCurrentLocales(startPosition, endPosition)
+            }
+        }
+    })
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -105,9 +138,11 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
             Timber.d("Change locale ${localeItem.displayName}")
             setLocale(localeItem)
         }
+
         currentListItemAdapter = CurrentLocaleListAdapter(
             LayoutInflater.from(context),
-            currentListItemMenuCallback
+            currentListItemMenuCallback,
+            itemTouchHelper::startDrag
         )
     }
 
@@ -181,6 +216,8 @@ class LocaleListFragment : Fragment(R.layout.fragment_locale_list) {
                 requireContext(), LinearLayoutManager.VERTICAL, false
             )
             binding.recyclerViewCurrentLocales.adapter = currentListItemAdapter
+
+            itemTouchHelper.attachToRecyclerView(binding.recyclerViewCurrentLocales)
 
             binding.saveLocalesSettingButton.setOnClickListener {
                 viewModel.setLocales()
